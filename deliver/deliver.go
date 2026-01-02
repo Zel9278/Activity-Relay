@@ -40,6 +40,9 @@ func relayActivityV2(args ...string) error {
 		domain, _ := url.Parse(inboxURL)
 		pushErrorLogScript := "local change = redis.call('HSETNX', KEYS[1], 'last_error', ARGV[1]); if change == 1 then redis.call('EXPIRE', KEYS[1], ARGV[2]) end;"
 		RedisClient.Eval(context.TODO(), pushErrorLogScript, []string{"relay:statistics:" + domain.Host}, err.Error(), 60).Result()
+	} else {
+		// Increment outbox counter on successful delivery
+		IncrementOutboxCount()
 	}
 	reductionRemainCountScript := "local remain_count = redis.call('HINCRBY', KEYS[1], 'remain_count', -1); if remain_count < 1 then redis.call('DEL', KEYS[1]) end;"
 	RedisClient.Eval(context.TODO(), reductionRemainCountScript, []string{"relay:activity:" + activityID}).Result()

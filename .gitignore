@@ -37,3 +37,17 @@
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/go,visualstudiocode
+
+# Binary
+Activity-Relay
+
+# Private key
+actor.pem
+
+# Config with secrets
+config.yml
+!config.yml.example
+
+# Redis data
+redisdata/
+*.rdb

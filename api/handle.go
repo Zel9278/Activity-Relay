@@ -98,6 +98,9 @@ func handleRelayActor(writer http.ResponseWriter, request *http.Request) {
 func handleInbox(writer http.ResponseWriter, request *http.Request, activityDecoder func(*http.Request) (*models.Activity, *models.Actor, []byte, error)) {
 	switch request.Method {
 	case "POST":
+		// Increment inbox counter for statistics
+		IncrementInboxCount()
+
 		activity, actor, body, err := activityDecoder(request)
 		if err != nil {
 			writer.WriteHeader(400)
