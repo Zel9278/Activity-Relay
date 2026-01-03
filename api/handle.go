@@ -60,7 +60,8 @@ func handleNodeinfo(writer http.ResponseWriter, request *http.Request) {
 		writer.WriteHeader(400)
 		writer.Write(nil)
 	} else {
-		userTotal := len(RelayState.Subscribers)
+		// Count both subscribers and followers (Akkoma/Pleroma use follower style)
+		userTotal := len(RelayState.Subscribers) + len(RelayState.Followers)
 		Nodeinfo.Nodeinfo.Usage.Users.Total = userTotal
 		Nodeinfo.Nodeinfo.Usage.Users.ActiveMonth = userTotal
 		Nodeinfo.Nodeinfo.Usage.Users.ActiveHalfyear = userTotal

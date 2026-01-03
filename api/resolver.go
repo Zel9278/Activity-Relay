@@ -13,6 +13,15 @@ import (
 	"github.com/yukimochi/machinery-v1/v1/tasks"
 )
 
+// getInboxURL returns the SharedInbox URL if available, otherwise falls back to Inbox.
+// This is needed for Akkoma/Pleroma compatibility as they may not set endpoints.sharedInbox.
+func getInboxURL(actor *models.Actor) string {
+	if actor.Endpoints != nil && actor.Endpoints.SharedInbox != "" {
+		return actor.Endpoints.SharedInbox
+	}
+	return actor.Inbox
+}
+
 func contains(entries interface{}, key string) bool {
 	switch entry := entries.(type) {
 	case string:
@@ -223,7 +232,7 @@ func executeFollowing(activity *models.Activity, actor *models.Actor) error {
 	case contains(activity.Object, "https://www.w3.org/ns/activitystreams#Public"):
 		if RelayState.RelayConfig.ManuallyAccept {
 			RelayState.RedisClient.HMSet(context.TODO(), "relay:pending:"+actorID.Host, map[string]interface{}{
-				"inbox_url":   actor.Endpoints.SharedInbox,
+				"inbox_url":   getInboxURL(actor),
 				"activity_id": activity.ID,
 				"type":        "Follow",
 				"actor":       actor.ID,
@@ -236,7 +245,7 @@ func executeFollowing(activity *models.Activity, actor *models.Actor) error {
 			go enqueueRegisterActivity(actor.Inbox, jsonData)
 			RelayState.AddSubscriber(models.Subscriber{
 				Domain:     actorID.Host,
-				InboxURL:   actor.Endpoints.SharedInbox,
+				InboxURL:   getInboxURL(actor),
 				ActivityID: activity.ID,
 				ActorID:    actor.ID,
 			})
@@ -246,7 +255,7 @@ func executeFollowing(activity *models.Activity, actor *models.Actor) error {
 		if isActorAbleToBeFollower(actorID) {
 			if RelayState.RelayConfig.ManuallyAccept {
 				RelayState.RedisClient.HMSet(context.TODO(), "relay:pending:"+actorID.Host, map[string]interface{}{
-					"inbox_url":   actor.Endpoints.SharedInbox,
+					"inbox_url":   getInboxURL(actor),
 					"activity_id": activity.ID,
 					"type":        "Follow",
 					"actor":       actor.ID,
