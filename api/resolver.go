@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"github.com/yukimochi/Activity-Relay/discord"
 	"github.com/yukimochi/Activity-Relay/models"
 	"github.com/yukimochi/machinery-v1/v1/tasks"
 )
@@ -226,6 +227,8 @@ func isToMyFollower(entries []string) bool {
 func executeFollowing(activity *models.Activity, actor *models.Actor) error {
 	actorID, _ := url.Parse(actor.ID)
 	if isActorBlocked(actorID) {
+		// Send Discord notification for blocked server attempt
+		discord.SendNotification(discord.NotifyBlocked, actorID.Host, actor.ID)
 		return errors.New(actorID.Host + " is blocked")
 	}
 	switch {
@@ -239,6 +242,8 @@ func executeFollowing(activity *models.Activity, actor *models.Actor) error {
 				"object":      activity.Object.(string),
 			})
 			logrus.Info("Pending Follow Request : ", activity.Actor)
+			// Send Discord notification for pending request
+			discord.SendNotification(discord.NotifyPendingRequest, actorID.Host, actor.ID)
 		} else {
 			resp := activity.GenerateReply(RelayActor, activity, "Accept")
 			jsonData, _ := json.Marshal(&resp)
@@ -250,6 +255,8 @@ func executeFollowing(activity *models.Activity, actor *models.Actor) error {
 				ActorID:    actor.ID,
 			})
 			logrus.Info("Accepted Follow Request : ", activity.Actor)
+			// Send Discord notification for new registration
+			discord.SendNotification(discord.NotifyFollow, actorID.Host, actor.ID)
 		}
 	case contains(activity.Object, RelayActor.ID):
 		if isActorAbleToBeFollower(actorID) {
@@ -262,6 +269,8 @@ func executeFollowing(activity *models.Activity, actor *models.Actor) error {
 					"object":      activity.Object.(string),
 				})
 				logrus.Info("Pending Follow Request : ", activity.Actor)
+				// Send Discord notification for pending request
+				discord.SendNotification(discord.NotifyPendingRequest, actorID.Host, actor.ID)
 			} else {
 				resp := activity.GenerateReply(RelayActor, activity, "Accept")
 				jsonData, _ := json.Marshal(&resp)
@@ -275,6 +284,8 @@ func executeFollowing(activity *models.Activity, actor *models.Actor) error {
 				}
 				RelayState.AddFollower(follower)
 				logrus.Info("Accepted Follow Request : ", activity.Actor)
+				// Send Discord notification for new registration
+				discord.SendNotification(discord.NotifyFollow, actorID.Host, actor.ID)
 
 				executeMutuallyFollow(follower)
 			}
@@ -294,11 +305,15 @@ func executeUnfollowing(activity *models.Activity, actor *models.Actor) error {
 	case contains(activity.Object, "https://www.w3.org/ns/activitystreams#Public"):
 		RelayState.DelSubscriber(actorID.Host)
 		logrus.Info("Accepted Unfollow Request : ", activity.Actor)
+		// Send Discord notification for unregistration
+		discord.SendNotification(discord.NotifyUnfollow, actorID.Host, actor.ID)
 		return nil
 	case contains(activity.Object, RelayActor.ID):
 		if isActorAbleToBeFollower(actorID) {
 			RelayState.DelFollower(actorID.Host)
 			logrus.Info("Accepted Unfollow Request : ", activity.Actor)
+			// Send Discord notification for unregistration
+			discord.SendNotification(discord.NotifyUnfollow, actorID.Host, actor.ID)
 			return nil
 		}
 		fallthrough

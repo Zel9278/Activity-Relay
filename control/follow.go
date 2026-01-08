@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/yukimochi/Activity-Relay/discord"
 	"github.com/yukimochi/Activity-Relay/models"
 	"github.com/yukimochi/machinery-v1/v1/tasks"
 )
@@ -109,6 +110,13 @@ func createFollowRequestResponse(domain string, response string) error {
 	}
 	enqueueRegisterActivity(data["inbox_url"], jsonData)
 	RelayState.RedisClient.Del(context.TODO(), "relay:pending:"+domain)
+
+	// Send Discord notification for admin action
+	if response == "Accept" {
+		discord.SendNotification(discord.NotifyAccepted, domain, data["actor"])
+	} else {
+		discord.SendNotification(discord.NotifyRejected, domain, data["actor"])
+	}
 
 	switch {
 	case contains(activity.Object, "https://www.w3.org/ns/activitystreams#Public"):

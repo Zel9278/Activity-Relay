@@ -6,6 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/yukimochi/Activity-Relay/discord"
 	"github.com/yukimochi/Activity-Relay/models"
 	"github.com/yukimochi/machinery-v1/v1"
 )
@@ -86,6 +87,13 @@ func initialize() error {
 	}
 
 	RelayActor = models.NewActivityPubActorFromRelayConfig(GlobalConfig)
+
+	// Initialize Discord notifications
+	discord.Initialize(
+		GlobalConfig.DiscordWebhookURL(),
+		GlobalConfig.ServerServiceName(),
+		GlobalConfig.ServiceIconURL(),
+	)
 
 	return nil
 }

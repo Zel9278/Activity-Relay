@@ -17,16 +17,17 @@ import (
 
 // RelayConfig contains valid configuration.
 type RelayConfig struct {
-	actorKey        *rsa.PrivateKey
-	domain          *url.URL
-	redisClient     *redis.Client
-	redisURL        string
-	serverBind      string
-	serviceName     string
-	serviceSummary  string
-	serviceIconURL  *url.URL
-	serviceImageURL *url.URL
-	jobConcurrency  int
+	actorKey          *rsa.PrivateKey
+	domain            *url.URL
+	redisClient       *redis.Client
+	redisURL          string
+	serverBind        string
+	serviceName       string
+	serviceSummary    string
+	serviceIconURL    *url.URL
+	serviceImageURL   *url.URL
+	jobConcurrency    int
+	discordWebhookURL string
 }
 
 // NewRelayConfig create valid RelayConfig from viper configuration.
@@ -70,18 +71,23 @@ func NewRelayConfig() (*RelayConfig, error) {
 	}
 
 	serverBind := viper.GetString("RELAY_BIND")
+	discordWebhookURL := viper.GetString("DISCORD_WEBHOOK_URL")
+	if discordWebhookURL != "" {
+		logrus.Info("DISCORD_WEBHOOK_URL: Discord notifications enabled")
+	}
 
 	return &RelayConfig{
-		actorKey:        privateKey,
-		domain:          domain,
-		redisClient:     redisClient,
-		redisURL:        redisURL,
-		serverBind:      serverBind,
-		serviceName:     viper.GetString("RELAY_SERVICENAME"),
-		serviceSummary:  viper.GetString("RELAY_SUMMARY"),
-		serviceIconURL:  iconURL,
-		serviceImageURL: imageURL,
-		jobConcurrency:  jobConcurrency,
+		actorKey:          privateKey,
+		domain:            domain,
+		redisClient:       redisClient,
+		redisURL:          redisURL,
+		serverBind:        serverBind,
+		serviceName:       viper.GetString("RELAY_SERVICENAME"),
+		serviceSummary:    viper.GetString("RELAY_SUMMARY"),
+		serviceIconURL:    iconURL,
+		serviceImageURL:   imageURL,
+		jobConcurrency:    jobConcurrency,
+		discordWebhookURL: discordWebhookURL,
 	}, nil
 }
 
@@ -113,6 +119,19 @@ func (relayConfig *RelayConfig) ActorKey() *rsa.PrivateKey {
 // RedisClient is return redis client from RelayConfig.
 func (relayConfig *RelayConfig) RedisClient() *redis.Client {
 	return relayConfig.redisClient
+}
+
+// DiscordWebhookURL returns the Discord webhook URL for notifications.
+func (relayConfig *RelayConfig) DiscordWebhookURL() string {
+	return relayConfig.discordWebhookURL
+}
+
+// ServiceIconURL returns the service icon URL.
+func (relayConfig *RelayConfig) ServiceIconURL() string {
+	if relayConfig.serviceIconURL != nil {
+		return relayConfig.serviceIconURL.String()
+	}
+	return ""
 }
 
 // DumpWelcomeMessage provide build and config information string.

@@ -6,6 +6,7 @@ import (
 
 	"github.com/patrickmn/go-cache"
 	"github.com/sirupsen/logrus"
+	"github.com/yukimochi/Activity-Relay/discord"
 	"github.com/yukimochi/Activity-Relay/models"
 	"github.com/yukimochi/machinery-v1/v1"
 )
@@ -65,6 +66,13 @@ func initialize(globalConfig *models.RelayConfig) error {
 
 	Nodeinfo = models.GenerateNodeinfoResources(globalConfig.ServerHostname(), version)
 	WebfingerResources = append(WebfingerResources, RelayActor.GenerateWebfingerResource(globalConfig.ServerHostname()))
+
+	// Initialize Discord notifications
+	discord.Initialize(
+		globalConfig.DiscordWebhookURL(),
+		globalConfig.ServerServiceName(),
+		globalConfig.ServiceIconURL(),
+	)
 
 	return nil
 }
