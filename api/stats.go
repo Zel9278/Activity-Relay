@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/yukimochi/Activity-Relay/delaymetrics"
 )
 
 // DeliveryStats holds inbox/outbox statistics
@@ -112,6 +114,41 @@ func handleDeliveryStats(writer http.ResponseWriter, request *http.Request) {
 
 	stats := GetDeliveryStats(hours)
 	response, err := json.Marshal(stats)
+	if err != nil {
+		writer.WriteHeader(500)
+		writer.Write(nil)
+		return
+	}
+
+	writer.WriteHeader(200)
+	writer.Write(response)
+}
+
+// handleDelayMetrics handles requests for federation delay metrics
+func handleDelayMetrics(writer http.ResponseWriter, request *http.Request) {
+	if request.Method != "GET" {
+		writer.WriteHeader(400)
+		writer.Write(nil)
+		return
+	}
+
+	// Allow CORS for frontend
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
+	writer.Header().Set("Content-Type", "application/json")
+
+	// Get hours parameter, default to 24 hours
+	hoursStr := request.URL.Query().Get("hours")
+	hours := 24
+	if hoursStr != "" {
+		if h, err := strconv.Atoi(hoursStr); err == nil && h > 0 && h <= 24 {
+			hours = h
+		}
+	}
+
+	// Get source instance from config
+	sourceInstance := GlobalConfig.ServerHostname().Host
+
+	response, err := delaymetrics.GetDelayMetricsJSON(hours, sourceInstance)
 	if err != nil {
 		writer.WriteHeader(500)
 		writer.Write(nil)

@@ -122,25 +122,25 @@ func NewActivityPubActorFromRemoteActor(url string, uaString string, cache *cach
 
 // Activity : ActivityPub Activity.
 type Activity struct {
-	Context interface{} `json:"@context,omitempty"`
-	ID      string      `json:"id,omitempty"`
-	Actor   string      `json:"actor,omitempty"`
-	Type    string      `json:"type,omitempty"`
-	Object  interface{} `json:"object,omitempty"`
-	To      []string    `json:"to,omitempty"`
-	Cc      []string    `json:"cc,omitempty"`
+	Context   interface{} `json:"@context,omitempty"`
+	ID        string      `json:"id,omitempty"`
+	Actor     string      `json:"actor,omitempty"`
+	Type      string      `json:"type,omitempty"`
+	Object    interface{} `json:"object,omitempty"`
+	To        []string    `json:"to,omitempty"`
+	Cc        []string    `json:"cc,omitempty"`
+	Published string      `json:"published,omitempty"`
 }
 
 // GenerateReply : Generate activity to activity's actor.
 func (activity *Activity) GenerateReply(actor Actor, object interface{}, activityType string) Activity {
 	return Activity{
-		[]string{"https://www.w3.org/ns/activitystreams"},
-		actor.ID + "/activities/" + uuid.New().String(),
-		actor.ID,
-		activityType,
-		object,
-		[]string{activity.Actor},
-		nil,
+		Context: []string{"https://www.w3.org/ns/activitystreams"},
+		ID:      actor.ID + "/activities/" + uuid.New().String(),
+		Actor:   actor.ID,
+		Type:    activityType,
+		Object:  object,
+		To:      []string{activity.Actor},
 	}
 }
 
@@ -192,13 +192,12 @@ func (activity *Activity) UnwrapInnerObjectId() (string, error) {
 // NewActivityPubActivity : Generate activity.
 func NewActivityPubActivity(actor Actor, to []string, object interface{}, activityType string) Activity {
 	return Activity{
-		[]string{"https://www.w3.org/ns/activitystreams"},
-		actor.ID + "/activities/" + uuid.New().String(),
-		actor.ID,
-		activityType,
-		object,
-		to,
-		nil,
+		Context: []string{"https://www.w3.org/ns/activitystreams"},
+		ID:      actor.ID + "/activities/" + uuid.New().String(),
+		Actor:   actor.ID,
+		Type:    activityType,
+		Object:  object,
+		To:      to,
 	}
 }
 

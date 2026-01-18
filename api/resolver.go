@@ -229,7 +229,10 @@ func executeFollowing(activity *models.Activity, actor *models.Actor) error {
 	if isActorBlocked(actorID) {
 		// Send Discord notification for blocked server attempt
 		discord.SendNotification(discord.NotifyBlocked, actorID.Host, actor.ID)
-		return errors.New(actorID.Host + " is blocked")
+		// Send Reject to the blocked server so they know they're blocked
+		err := errors.New(actorID.Host + " is blocked")
+		executeRejectRequest(activity, actor, err)
+		return err
 	}
 	switch {
 	case contains(activity.Object, "https://www.w3.org/ns/activitystreams#Public"):
